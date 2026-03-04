@@ -1,19 +1,8 @@
-# pongc - Classic pong game but... multithreaded and multiplayer!
+# PongC
 
-**pongc** is a multithreaded Pong with multiplayer support and GPU-accelerated rendering using OpenGL. 
+**PongC** is a multithreaded implementation of classic „Pong” game in C-Lang. PongC uses multithreading, GPU rendering, and 1v1 network technology on a Peer-to-Peer architecture.
 
-![Gameplay](demo.gif)
-
----
-
-# Technology stack used
-
-- **SDL2** - Creating window, handling input
-- **OpenGL** - Drawing on window, shaders
-- **ENet** - Network communication with UDP
-- **Threads** - Multithreaded code (`<threads.h>`)
-
----
+![Demo video](demo.gif)
 
 # Project layout
 
@@ -41,64 +30,14 @@ zerfithel/pongc
 
 ## Pre-requisites:
 
-- C Compiler (C23 or higher recommended)
-- SDL2
+- C Compiler
+- SDL
 - libenet
-- OpenGL (GLEW)
+- OpenGL, GLEW
 - git
-- cmake, make (optional)
-- shell (optional)
-
-The project uses `<threads.h>` for threads which isn't fully supported on Windows, if you are Windows user then use the [tinycthread](https://github.com/tinycthread/tinycthread). More info in Windows building guide 
+- cmake, make
 
 ---
-
-## Building on Windows
-1. Clone this repository:
-```powershell
-git clone https://github.com/zerfithel/pongc
-cd pongc
-```
-
-2. Clone `tinycthread` and copy it into the project:
-```powershell
-git clone https://github.com/tinycthread/tinycthread
-cp tinycthread/source/tinycthread.c src/tinycthread.c
-cp tinycthread/source/tinycthread.h include/tinycthread.h
-```
-
-3. Add `tinycthread.c` to `CMakeLists.txt` in `SOURCES`:
-```cmake
-set (SOURCES, 
-    ...
-    src/tinycthread.c
-)
-```
-
-4. Replace all `<threads.h>` with `"tinycthread.h"` in all `.c` files inside `src/` directory
-
-5. Build:
-```powershell
-mkdir build; cd build
-cmake ..
-make
-```
-
-6. Install:
-```powershell
-cd ..
-scripts\install.bat
-```
-
-7. Run pongc:
-```powershell
-pongc --host <port>
-pongc --join <ip:port>
-```
-
----
-
-## Building on Linux
 
 1. Clone this repository:
 ```bash
@@ -108,55 +47,21 @@ cd pongc
 
 2. Build:
 ```bash
-mkdir build; cd build
+mkdir build
+cd build
 cmake ..
 make
 ```
 
-3. Install:
+3. Run:
 ```bash
-cd ..
-scripts/install.sh
+./pongc
 ```
 
-4. Run pongc:
-```bash
-pongc --host <port>
-pongc --join <ip:port>
-```
+# Pre-compiled binaries
 
-> **Info:** If you don't have port forwarding then you will have to use hamachi to play with your friends. This applies to both Windows and Linux.
+You can find pre-compiled binaries for both Windows and Linux in [releases](https://github.com/zerfithel/pongc/releases) page.
 
----
+# LICENSE
 
-# Uninstalling
-
-If you wish to uninstall the game use the `uninstall` script in the project. After installing, it should be in:
-
-- Linux:
-```
-~/.local/share/scripts/uninstall.sh
-```
-
-- Windows:
-```
-%APPDATA%\pongc\scripts\uninstall.sh
-```
-
----
-
-# Plans to do in next update
-
-- Make ball packet also send server_tick so client can interpolate ball position if there is a delay, so player has always the correct position of ball and not delayed a little bit.
-- Send data in raw bytes (structures like BallPacket or InputPacket) instead of slow strings
-- Rename variable names and add more comments to blocks of code
-- Optimize user input network code (instead of sending position, just send input and heartbeat as confirmation that input still lasts)
-- Synchronise score with server and client
-- Print score on screen
-- Add fancy effects (like motion blur after the ball, animations and sounds, soundtrack etc.)
-
----
-
-# License
-
-**pongc** is licensed under MIT license. For more details see [LICENSE.txt](LICENSE.txt).
+**PongC** is licensed under MIT license. For more details see [LICENSE.txt](LICENSE.txt).
