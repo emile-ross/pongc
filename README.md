@@ -1,7 +1,7 @@
 <div align="center">
 
-<img src="logo.png" alt="Logo">
-<h1><a href="https://pongc.vercel.app">Website</a> | <a href="https://github.com/zerfithel/pongc/releases">Releases</a></h1>
+<h1>[ pongc ]</h1>
+<h2><a href="https://pongc.vercel.app">Website</a> | <a href="https://github.com/zerfithel/pongc/releases">Releases</a></h2>
 
 </div>
 
