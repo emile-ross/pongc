@@ -1,7 +1,6 @@
 <div align="center">
 
-<h1>[ pongc ]</h1>
-<h2><a href="https://pongc.vercel.app">Website</a> | <a href="https://github.com/zerfithel/pongc/releases">Releases</a></h2>
+<h1>[ pongc ]<br><a href="https://pongc.vercel.app">Website</a> | <a href="https://github.com/zerfithel/pongc/releases">Releases</a></h1>
 
 </div>
 
