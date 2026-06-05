@@ -1,67 +1,66 @@
-# PongC
+<div align="center">
 
-**PongC** is a multithreaded implementation of classic „Pong” game in C-Lang. PongC uses multithreading, GPU rendering, and 1v1 network technology on a Peer-to-Peer architecture.
+<img src="logo.png" alt="Logo">
+<h1><a href="https://pongc.vercel.app">Website</a> | <a href="https://github.com/zerfithel/pongc/releases">Releases</a></h1>
 
-![Demo video](demo.gif)
+</div>
+
+# Features
+
+![demo](demo.gif)
+
+- Multithreaded (network & game-logic thread)
+- P2P architecture
+- GPU-Acceleration in OpenGL
+- Low-level optimizations (thanks to being written in C)
+- Hackable shaders and game settings
+
+# Install from source
+
+Dependencies:
+- git *
+- cmake *
+- make *
+- SDL2
+- OpenGL 3.3+
+- libenet
+
+*_make depends_
+
+The build is CMake-based. After installing the dependencies run the following commands.
+
+```bash
+git clone https://github.com/zerfithel/pongc && cd pongc
+[ -d "build/" ] || mkdir build/
+cd build && cmake ..
+make -j$(nproc)
+cd ..
+```
+
+In order to install PongC run following command if you are using Linux or Unix/Unix-like system:
+```bash
+chmod +x scripts/install.sh && scripts/install.sh
+```
+
+If you are using Windows, please run instead:
+```bash
+.\scripts\install.bat
+```
 
 # Project layout
 
 ```
-zerfithel/pongc
-├── CMakeLists.txt - CMake file
-├── demo.gif       - Demo video
-├── LICENSE.txt    - License (MIT)
-├── README.md      - This file
-├── scripts/       - Shell scripts
-├── build/         - Directory for building
-├── include/       - Header files
-└── src            - Source code
-    ├── main.c     -- Start of the program
-    ├── game.c     -- Main thread
-    ├── ball.c     -- Ball physics
-    ├── client.c   -- Network thread (client)
-    ├── server.c   -- Network thread (server)
-    ├── signals.c  -- Signal handlers and senders
-    ├── utils.c    -- Math/string utils
-    └── shaders.c  -- Utils for shaders
+├── CMakeLists.txt  CMake build file
+├── demo.gif        Game demo GIF
+├── docs            Project documentation
+├── external        External library (tinycthread, for windows only)
+├── include         PongC header files
+├── LICENSE.txt     Project LICENSE
+├── README.md       This file
+├── scripts         Associated to project scripts
+└── src             PongC source code
 ```
 
-# Building from source
+# License
 
-## Pre-requisites:
-
-- C Compiler
-- SDL
-- libenet
-- OpenGL, GLEW
-- git
-- cmake, make
-
----
-
-1. Clone this repository:
-```bash
-git clone https://github.com/zerfithel/pongc
-cd pongc
-```
-
-2. Build:
-```bash
-mkdir build
-cd build
-cmake ..
-make
-```
-
-3. Run:
-```bash
-./pongc
-```
-
-# Pre-compiled binaries
-
-You can find pre-compiled binaries for both Windows and Linux in [releases](https://github.com/zerfithel/pongc/releases) page.
-
-# LICENSE
-
-**PongC** is licensed under MIT license. For more details see [LICENSE.txt](LICENSE.txt).
+PongC project and source code inside `src/` and `include/` are under MIT license. For more details click [here](LICENSE.txt).
