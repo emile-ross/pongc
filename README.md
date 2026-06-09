@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>[ pongc ]<br><a href="https://pongc.vercel.app">Website</a> | <a href="https://github.com/zerfithel/pongc/releases">Releases</a></h1>
+<h1>[ pongc ]<br><a href="https://github.com/zerfithel/pongc/releases">Releases</a></h1>
 PongC is a multithreaded implementation of a retro-game „Pong” in pure C, it uses GPU-accelerated rendering using OpenGL and implements a P2P two-player mode.
 
 </div>
