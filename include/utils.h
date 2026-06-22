@@ -17,7 +17,7 @@ bool valid_ipv4(const char *str);
 // true  -> if given string is a valid IPv4 address
 // false -> if its not a valid port
 // Does not include 0 as a port
-bool valid_port(int port);
+bool valid_port(long port);
 
 // Clamps the given val by returning the value between min and max
 // used to clamp player pos to map

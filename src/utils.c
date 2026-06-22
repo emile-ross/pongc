@@ -66,7 +66,7 @@ bool valid_ipv4(const char *str) {
 }
 
 // doesnt include 0 as a port
-bool valid_port(int port) {
+bool valid_port(long port) {
   if (port > 0 && port <= 65535) {
     return true;
   }
