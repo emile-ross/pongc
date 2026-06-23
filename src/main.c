@@ -37,7 +37,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 #include "shared.h"
 #include "config.h"
 
-constexpr int MIN_ARG = 2;
+const int MIN_ARG = 2;
 
 int main(int argc, char **argv) {
   srand(time(NULL));
@@ -101,11 +101,16 @@ int main(int argc, char **argv) {
       fprintf(stderr, "ERROR: No enough arguments: missing port\n");
       return 1;
     }
-    _port = (enet_uint16)atoi(argv[2]);
-    if (!valid_port(_port)) {
+    char *endptr;
+    long port_input = strtol(argv[2], &endptr, 10);
+    if (*endptr != '\0') {
+      fprintf(stderr, "ERROR: Failed to convert port number\n");
+    }
+    if (!valid_port(port_input)) {
       fprintf(stderr, "ERROR: Invalid port: %s\n", argv[2]);
       return 1;
     }
+    _port = (enet_uint16)port_input;
     _is_server = true;
   }
   else {
