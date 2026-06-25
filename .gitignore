@@ -5,7 +5,7 @@
 *.a
 *.so
 
-/build/
+/build/*
 /bin/
 /obj/
 

@@ -34,7 +34,6 @@ int join_server(const char *ip, enet_uint16 port) {
   );
 
   if (client_host == NULL) {
-    fprintf(stderr, "ERROR: Failed to create enet client_host host\n");
     return 1;
   }
 
@@ -43,19 +42,14 @@ int join_server(const char *ip, enet_uint16 port) {
 
   server_peer = enet_host_connect(client_host, &address, 2, 0);
   if (server_peer == NULL) {
-    fprintf(stderr, "ERROR: Failed to create server_peer peer\n");
     enet_host_destroy(client_host);
     client_host = NULL;
     return 1;
   }
 
-  if (enet_host_service(client_host, &event, 5000) > 0 &&
-      event.type == ENET_EVENT_TYPE_CONNECT)
+  if (!(enet_host_service(client_host, &event, 5000) > 0 &&
+      event.type == ENET_EVENT_TYPE_CONNECT)) 
   {
-    printf("Info: Connected to server %s:%d\n", ip, port);
-    //server_peer = event.peer;
-  } else {
-    fprintf(stderr, "ERROR: Failed to connect to server_peer %s:%d\n", ip, port);
     enet_peer_reset(server_peer);
     server_peer = NULL;
     enet_host_destroy(client_host);
@@ -63,7 +57,7 @@ int join_server(const char *ip, enet_uint16 port) {
     return 1;
   }
 
-  return 1;
+  return 0;
 }
 
 // loop ran in network thread

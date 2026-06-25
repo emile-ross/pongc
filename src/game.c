@@ -16,7 +16,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 #include <stdlib.h>
 #include <stdatomic.h>
 #ifdef _WIN32
-  #include "../external/tinycthread.h"
+  #include "tinycthread.h"
 #else
   #include <threads.h>
 #endif

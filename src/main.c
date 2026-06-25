@@ -21,7 +21,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 #include <stdatomic.h>
 #include <time.h>
 #ifdef _WIN32
-  #include "../external/tinycthread.h"
+  #include "tinycthread.h"
 #else
   #include <threads.h>
 #endif
@@ -37,29 +37,43 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 #include "shared.h"
 #include "config.h"
 
-const int MIN_ARG = 2;
+#define MIN_ARG 2
 
 int main(int argc, char **argv) {
+  int status = 0;
+
   srand(time(NULL));
 
   char ip_buffer[64] = {0};
-  const char *_ip   = NULL;
+  const char *_ip = NULL;
   enet_uint16 _port = 0;
   bool _is_server = false;
+
+  SDL_Window *window = NULL;
+  SDL_GLContext gl_ctx = NULL;
+  thrd_t network_thread;
+  bool thread_created = false;
+
+  SharedData shared;
+  bool sdl_ok = false;
+  bool enet_ok = false;
+  bool mtx_ok = false;
 
   /// parse args
   if (argc < MIN_ARG) {
     puts("Example usage:");
     printf("JOIN SERVER - %s --join ip:port\n", argv[0]);
     printf("HOST SERVER - %s --host port\n", argv[0]);
-    return 2;
+    status = 2;
+    goto cleanup;
   }
 
   // client
   if (strcmp(argv[1], "--join") == 0) {
     if (argc < 3) {
       fprintf(stderr, "ERROR: Missing server address\n");
-      return 1;
+      status = 1;
+      goto cleanup;
     }
 
     const char *arg = argv[2];
@@ -68,13 +82,15 @@ int main(int argc, char **argv) {
     char *colon = strchr(arg, ':');
     if (!colon) {
       fprintf(stderr, "ERROR: Invalid server address, missing colon <ip:port>\n");
-      return 1;
+      status = 1;
+      goto cleanup;
     }
 
     size_t ip_len = colon - arg;
     if (ip_len >= sizeof(ip_buffer)) {
       fprintf(stderr, "ERROR: IP too long\n");
-      return 1;
+      status = 1;
+      goto cleanup;
     }
 
     memcpy(ip_buffer, arg, ip_len);
@@ -82,65 +98,78 @@ int main(int argc, char **argv) {
 
     if (!valid_ipv4(ip_buffer)) {
       fprintf(stderr, "ERROR: Invalid IPv4 address: %s\n", ip_buffer);
-      return 1;
+      status = 1;
+      goto cleanup;
     }
 
-    int int_port = atoi(colon + 1);
-    if (!valid_port(int_port)) {
+    char *endptr;
+    long port_input = strtol(colon + 1, &endptr, 10);
+    if (*endptr != '\0') {
+      fprintf(stderr, "ERROR: Failed to convert port number\n");
+      status = 1;
+      goto cleanup;
+    }
+    if (!valid_port(port_input)) {
       fprintf(stderr, "ERROR: Invalid port: %s\n", colon + 1);
-      return 1;
+      status = 1;
+      goto cleanup;
     }
 
     _ip = ip_buffer;
-    _port = (enet_uint16)int_port;
+    _port = (enet_uint16)port_input;
     _is_server = false;
   }
   // server
   else if (strcmp(argv[1], "--host") == 0) {
     if (argc < 3) {
       fprintf(stderr, "ERROR: No enough arguments: missing port\n");
-      return 1;
+      status = 1;
+      goto cleanup;
     }
+
     char *endptr;
     long port_input = strtol(argv[2], &endptr, 10);
     if (*endptr != '\0') {
       fprintf(stderr, "ERROR: Failed to convert port number\n");
+      status = 1;
+      goto cleanup;
     }
     if (!valid_port(port_input)) {
       fprintf(stderr, "ERROR: Invalid port: %s\n", argv[2]);
-      return 1;
+      status = 1;
+      goto cleanup;
     }
+
     _port = (enet_uint16)port_input;
     _is_server = true;
   }
   else {
     fprintf(stderr, "ERROR: Unknown argument: %s\n", argv[1]);
-    return 1;
+    status = 1;
+    goto cleanup;
   }
 
   // sanity check
-  if (!_is_server &&
-      (
-        _ip == NULL ||
-        _port == 0
-      )
-     )
-  {
+  if (!_is_server && (_ip == NULL || _port == 0)) {
     fprintf(stderr, "ERROR: Failed to get server IP or port\nIP: %s\nPort: %u\n", _ip, _port);
-    return 1;
+    status = 1;
+    goto cleanup;
   }
-  else {
-    if (_port == 0) {
-      fprintf(stderr, "ERROR: Failed to get port to host on\n");
-      return 1;
-    }
+
+  if (_port == 0) {
+    fprintf(stderr, "ERROR: Failed to get port to host on\n");
+    status = 1;
+    goto cleanup;
   }
 
   // initialize SDL
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     fprintf(stderr, "ERROR: Failed to initialize SDL: %s\n", SDL_GetError());
-    return 1;
+    status = 1;
+    goto cleanup;
   }
+  sdl_ok = true;
+
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
@@ -148,7 +177,7 @@ int main(int argc, char **argv) {
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
   // create window
-  SDL_Window *window = SDL_CreateWindow(
+  window = SDL_CreateWindow(
     _is_server ? "PongC - Server" : "PongC - Client",
     SDL_WINDOWPOS_CENTERED,
     SDL_WINDOWPOS_CENTERED,
@@ -156,40 +185,37 @@ int main(int argc, char **argv) {
     WINDOW_HEIGHT,
     WINDOW_FLAGS
   );
+
   if (!window) {
     fprintf(stderr, "Error: Failed to create window: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
+    status = 1;
+    goto cleanup;
   }
 
   // create GL Context
-  SDL_GLContext gl_ctx = SDL_GL_CreateContext(window);
+  gl_ctx = SDL_GL_CreateContext(window);
   SDL_GL_SetSwapInterval(1);
 
   // initialize GLEW
   glewExperimental = GL_TRUE;
   if (glewInit() != GLEW_OK) {
     fprintf(stderr, "ERROR: Failed to initialize glew\n");
-    SDL_GL_DeleteContext(gl_ctx);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 1;
+    status = 1;
+    goto cleanup;
   }
+
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // initialize enet
   if (enet_initialize() != 0) {
     fprintf(stderr, "ERROR: Failed to initialize enet\n");
-    SDL_GL_DeleteContext(gl_ctx);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 1;
+    status = 1;
+    goto cleanup;
   }
+  enet_ok = true;
 
   // Shared structure and mutex
-  SharedData shared;
-  thrd_t network_thread;
   shared.y[0] = 0.0f;
   shared.y[1] = 0.0f;
   shared.score[0] = 0;
@@ -201,51 +227,73 @@ int main(int argc, char **argv) {
   shared.ball.speed = BALL_START_SPEED;
 
   atomic_store(&shared.running, true);
+
   if (mtx_init(&shared.players_mtx, mtx_plain) != thrd_success ||
       mtx_init(&shared.ball_mtx, mtx_plain) != thrd_success ||
-      mtx_init(&shared.score_mtx, mtx_plain) != thrd_success) 
-  {
+      mtx_init(&shared.score_mtx, mtx_plain) != thrd_success) {
     fprintf(stderr, "ERROR: Failed to initialize mutex\n");
-    SDL_GL_DeleteContext(gl_ctx);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 1;
+    status = 1;
+    goto cleanup;
   }
+  mtx_ok = true;
 
   if (_is_server) {
-    host_server(_port);
+    if (host_server(_port) != 0) {
+      fprintf(stderr, "ERROR: Failed to host server at port %d\n", _port);
+      status = 1;
+      goto cleanup;
+    }
+
     if (thrd_create(&network_thread, server_loop, &shared) != thrd_success) {
       fprintf(stderr, "ERROR: Failed to create network thread for server\n");
-      SDL_GL_DeleteContext(gl_ctx);
-      SDL_DestroyWindow(window);
-      SDL_Quit();
-      enet_deinitialize();
-      return 1;
+      status = 1;
+      goto cleanup;
     }
-  }
-  else {
-    join_server(_ip, _port);
+  } else {
+    if (join_server(_ip, _port) != 0) {
+      fprintf(stderr, "ERROR: Failed to join %s:%d\n", _ip, _port);
+      status = 1;
+      goto cleanup;
+    }
+
     if (thrd_create(&network_thread, client_loop, &shared) != thrd_success) {
       fprintf(stderr, "ERROR: Failed to create network thread for client\n");
-      SDL_GL_DeleteContext(gl_ctx);
-      SDL_DestroyWindow(window);
-      SDL_Quit();
-      enet_deinitialize();
-      return 1;
+      status = 1;
+      goto cleanup;
     }
   }
+
+  thread_created = true;
 
   // start game loop
   game_loop(window, &shared, _is_server);
 
-  // cleanup and exit
-  thrd_join(network_thread, NULL);
-  mtx_destroy(&shared.players_mtx);
-  mtx_destroy(&shared.ball_mtx);
-  mtx_destroy(&shared.score_mtx);
-  SDL_GL_DeleteContext(gl_ctx);
-  SDL_DestroyWindow(window);
-  SDL_Quit();
-  enet_deinitialize();
-  return 0;
+cleanup:
+  if (thread_created) {
+    thrd_join(network_thread, NULL);
+  }
+
+  if (mtx_ok) {
+    mtx_destroy(&shared.players_mtx);
+    mtx_destroy(&shared.ball_mtx);
+    mtx_destroy(&shared.score_mtx);
+  }
+
+  if (gl_ctx) {
+    SDL_GL_DeleteContext(gl_ctx);
+  }
+
+  if (window) {
+    SDL_DestroyWindow(window);
+  }
+
+  if (sdl_ok) {
+    SDL_Quit();
+  }
+
+  if (enet_ok) {
+    enet_deinitialize();
+  }
+
+  return status;
 }

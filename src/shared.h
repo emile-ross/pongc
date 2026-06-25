@@ -1,7 +1,7 @@
 #pragma once
 #include <stdatomic.h>
 #ifdef _WIN32
-  #include "../external/tinycthread.h"
+  #include "tinycthread.h"
 #else
   #include <threads.h>
 #endif

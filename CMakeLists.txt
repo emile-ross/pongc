@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(pongc VERSION 1.3 LANGUAGES C)
+project(pongc VERSION 1.4 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -8,7 +8,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2")
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+# include_directories(${PROJECT_SOURCE_DIR}/include)
 
 set(SOURCES
     src/main.c
@@ -22,7 +22,7 @@ set(SOURCES
 )
 
 if (_WIN32)
-  list(APPEND SOURCES external/tinycthread.c)
+  list(APPEND SOURCES src/tinycthread.c)
 endif()
 
 add_executable(${PROJECT_NAME} ${SOURCES})

@@ -35,11 +35,9 @@ int host_server(enet_uint16 port) {
     0
   );
   if (server_host == NULL) {
-    fprintf(stderr, "ERROR: Failed to host server on port: %u\n", port);
     return 1;
   }
 
-  printf("Info: Server is listening on port %u\n", port);
   return 0;
 }
 

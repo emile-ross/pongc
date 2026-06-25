@@ -21,6 +21,7 @@ Dependencies:
 - git *
 - cmake *
 - make *
+- C23+ compiler *
 - SDL2
 - OpenGL 3.3+
 - libenet
@@ -54,7 +55,6 @@ If you are using Windows, please run instead:
 ├── demo.gif        Game demo GIF
 ├── docs            Project documentation
 ├── external        External library (tinycthread, for windows only)
-├── include         PongC header files
 ├── LICENSE.txt     Project LICENSE
 ├── README.md       This file
 ├── scripts         Associated to project scripts
