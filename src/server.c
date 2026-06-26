@@ -3,37 +3,42 @@ The MIT License (MIT)
 
 Copyright © 2026 Zerfithel
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the “Software”), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include <enet/enet.h>
-#include "game.h"
 #include "ball.h"
-#include "signals.h"
 #include "config.h"
-#include "utils.h"
+#include "game.h"
 #include "random.h"
+#include "signals.h"
+#include "utils.h"
+#include <enet/enet.h>
 
 ENetPeer *client_peer = NULL;
 ENetHost *server_host = NULL;
-bool slot_taken  = false; // is player slot taken?
+bool slot_taken = false; // is player slot taken?
 
 int host_server(enet_uint16 port) {
   ENetAddress address;
   address.host = ENET_HOST_ANY;
   address.port = port;
 
-  server_host = enet_host_create(
-    &address,
-    2,
-    2,
-    0,
-    0
-  );
+  server_host = enet_host_create(&address, 2, 2, 0, 0);
   if (server_host == NULL) {
     return 1;
   }
@@ -56,7 +61,8 @@ int server_loop(void *data) {
   while (atomic_load(&shared->running)) {
     // time
     Uint64 now = SDL_GetPerformanceCounter();
-    double frame_time = (double)(now - prev_counter) / SDL_GetPerformanceFrequency();
+    double frame_time =
+        (double)(now - prev_counter) / SDL_GetPerformanceFrequency();
     prev_counter = now;
 
     if (frame_time > 0.25) {
@@ -67,101 +73,89 @@ int server_loop(void *data) {
     // non blocking receive
     while (enet_host_service(server_host, &event, 0) > 0) {
       switch (event.type) {
-        case ENET_EVENT_TYPE_CONNECT: {
-          mtx_lock(&shared->players_mtx);
-          {
-            shared->y[0] = LOGICAL_HEIGHT >> 1;
-            shared->y[1] = LOGICAL_HEIGHT >> 1;
-          }
-          mtx_unlock(&shared->players_mtx);
-
-          // slot is not taken
-          if (!slot_taken) {
-            printf(
-              "Info: Client joined: %x:%u\n",
-              event.peer->address.host,
-              event.peer->address.port
-            );
-            slot_taken = true;
-            client_peer = event.peer;
-            last_sent_y = shared->y[0];
-            mtx_lock  (&shared->ball_mtx);
-            {
-              shared->ball.x = LOGICAL_WIDTH  >> 1;
-              shared->ball.y = LOGICAL_HEIGHT >> 1;
-              shared->ball.dx = (rand() % 2) ? 1.0f : -1.0f;
-              shared->ball.dy = rand_range(-0.5f, 0.5f);
-              normalize2f(&shared->ball.dx, &shared->ball.dy);
-              shared->ball.speed = BALL_START_SPEED;
-            }
-            mtx_unlock(&shared->ball_mtx);
-          } else {
-            printf(
-              "Info: %x:%u tried to connect, but player slot is already taken\n",
-              event.peer->address.host,
-              event.peer->address.port
-            );
-
-            char message[16];
-            strncpy(message, "server_full", sizeof(message));
-            ENetPacket *packet = enet_packet_create(
-              message,
-              strlen(message) + 1,
-              ENET_PACKET_FLAG_RELIABLE
-            );
-
-            enet_peer_send(event.peer, 0, packet);
-            enet_host_flush(server_host);
-          }
-          break;
+      case ENET_EVENT_TYPE_CONNECT: {
+        mtx_lock(&shared->players_mtx);
+        {
+          shared->y[0] = LOGICAL_HEIGHT >> 1;
+          shared->y[1] = LOGICAL_HEIGHT >> 1;
         }
+        mtx_unlock(&shared->players_mtx);
 
-        case ENET_EVENT_TYPE_DISCONNECT: {
-          printf("Info: Client disconnected\n");
-          fflush(stdout);
-          slot_taken = false;
-          mtx_lock(&shared->players_mtx);
+        // slot is not taken
+        if (!slot_taken) {
+          printf("Info: Client joined: %x:%u\n", event.peer->address.host,
+                 event.peer->address.port);
+          slot_taken = true;
+          client_peer = event.peer;
+          last_sent_y = shared->y[0];
+          mtx_lock(&shared->ball_mtx);
           {
-            client_peer = NULL;
-            shared->y[1] = 0.0f;
+            shared->ball.x = LOGICAL_WIDTH >> 1;
+            shared->ball.y = LOGICAL_HEIGHT >> 1;
+            shared->ball.dx = (rand() % 2) ? 1.0f : -1.0f;
+            shared->ball.dy = rand_range(-0.5f, 0.5f);
+            normalize2f(&shared->ball.dx, &shared->ball.dy);
+            shared->ball.speed = BALL_START_SPEED;
           }
-          mtx_unlock(&shared->players_mtx);
-          break;
+          mtx_unlock(&shared->ball_mtx);
+        } else {
+          printf("Info: %x:%u tried to connect, but player slot is already "
+                 "taken\n",
+                 event.peer->address.host, event.peer->address.port);
+
+          char message[16];
+          strncpy(message, "server_full", sizeof(message));
+          ENetPacket *packet = enet_packet_create(message, strlen(message) + 1,
+                                                  ENET_PACKET_FLAG_RELIABLE);
+
+          enet_peer_send(event.peer, 0, packet);
+          enet_host_flush(server_host);
         }
+        break;
+      }
 
-        case ENET_EVENT_TYPE_RECEIVE: {
-          if (event.peer != client_peer) {
-            fprintf(
-              stderr,
-              "ERROR: Received message from different peer, ignoring packet...\n"
-            );
-            enet_packet_destroy(event.packet);
-            break;
-          }
+      case ENET_EVENT_TYPE_DISCONNECT: {
+        printf("Info: Client disconnected\n");
+        fflush(stdout);
+        slot_taken = false;
+        mtx_lock(&shared->players_mtx);
+        {
+          client_peer = NULL;
+          shared->y[1] = 0.0f;
+        }
+        mtx_unlock(&shared->players_mtx);
+        break;
+      }
 
-          char buffer[64];
-          size_t len = event.packet->dataLength;
-          if (len >= sizeof(buffer)) {
-            fprintf(
-              stderr,
-              "WARNING: Received too much data, ignoring packet...\n"
-            );
-            enet_packet_destroy(event.packet);
-            break;
-          }
-
-          memcpy(buffer, event.packet->data, len);
-          buffer[len] = '\0';
-
-          handle_signal(shared, buffer);
-
+      case ENET_EVENT_TYPE_RECEIVE: {
+        if (event.peer != client_peer) {
+          fprintf(stderr, "ERROR: Received message from different peer, "
+                          "ignoring packet...\n");
           enet_packet_destroy(event.packet);
           break;
         }
 
-        default: {
+        char buffer[64];
+        size_t len = event.packet->dataLength;
+        if (len >= sizeof(buffer)) {
+          fprintf(stderr,
+                  "WARNING: Received too much data, ignoring packet...\n");
+          enet_packet_destroy(event.packet);
           break;
         }
+
+        memcpy(buffer, event.packet->data, len);
+        buffer[len] = '\0';
+
+        handle_signal(shared, buffer);
+
+        enet_packet_destroy(event.packet);
+        break;
+      }
+
+      default: {
+        break;
+      }
       }
     }
 
@@ -176,8 +170,10 @@ int server_loop(void *data) {
       }
       mtx_unlock(&shared->players_mtx);
 
-      // Send new position to player and moving vector to player, if ball changed move direction
-      if (slot_taken && (shared->ball.dx != last_ball_dx || shared->ball.dy != last_ball_dy)) {
+      // Send new position to player and moving vector to player, if ball
+      // changed move direction
+      if (slot_taken && (shared->ball.dx != last_ball_dx ||
+                         shared->ball.dy != last_ball_dy)) {
         Ball ball;
         ball = shared->ball;
         send_signal_ball(client_peer, &ball);
@@ -190,18 +186,10 @@ int server_loop(void *data) {
         if (current_y != last_sent_y) {
           // send authorative pos
           char message[64];
-          int len = snprintf(
-            message,
-            sizeof(message),
-            "pos;%f",
-            current_y
-          );
+          int len = snprintf(message, sizeof(message), "pos;%f", current_y);
           if (len > 0) {
             ENetPacket *packet = enet_packet_create(
-              message,
-              (size_t)len + 1,
-              ENET_PACKET_FLAG_UNSEQUENCED
-            );
+                message, (size_t)len + 1, ENET_PACKET_FLAG_UNSEQUENCED);
 
             enet_peer_send(client_peer, 0, packet);
           }

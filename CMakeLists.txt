@@ -1,40 +1,60 @@
+# pongc/CMakeLists.txt
+# CMake build file for PongC
+# 
+# Build for production:
+# $ cmake -B build -DCMAKE_BUILD_TYPE=Release
+#
+# Build for debug:
+# $ cmake -B build -DCMAKE_BUILD_TYPE=Debug
+#
+# More informations at README.md
+
 cmake_minimum_required(VERSION 3.20)
 
 project(pongc VERSION 1.4 LANGUAGES C)
 
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+add_executable(pongc)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2")
+target_compile_features(pongc PRIVATE c_std_23)
 
-# include_directories(${PROJECT_SOURCE_DIR}/include)
-
-set(SOURCES
-    src/main.c
-    src/game.c
-    src/ball.c
-    src/signals.c
-    src/client.c
-    src/server.c
-    src/utils.c
-    src/shaders.c
+target_compile_options(pongc PRIVATE
+  -Wall
+  -Wextra
+  $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
+  $<$<CONFIG:Release>:-O3 -DNDEBUG>
 )
 
-if (_WIN32)
-  list(APPEND SOURCES src/tinycthread.c)
-endif()
+target_sources(pongc PRIVATE
+  src/main.c
+  src/game.c
+  src/ball.c
+  src/signals.c
+  src/client.c
+  src/server.c
+  src/utils.c
+  src/shaders.c
+)
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+if(WIN32)
+  target_sources(pongc PRIVATE src/external/tinycthread.c)
+endif()
 
 find_package(SDL2 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-  SDL2::SDL2 
-  GLEW::GLEW 
-  OpenGL::GL 
-  m 
+target_link_libraries(pongc PRIVATE
+  SDL2::SDL2
+  GLEW::GLEW
+  OpenGL::GL
+  m
   enet
+)
+
+target_include_directories(pongc PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+add_custom_target(distclean
+  COMMAND ${CMAKE_COMMAND} -E rm -rf CMakeCache.txt CMakeFiles cmake_install.cmake Makefile
 )

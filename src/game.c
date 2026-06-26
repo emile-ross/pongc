@@ -3,38 +3,45 @@ The MIT License (MIT)
 
 Copyright © 2026 Zerfithel
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the “Software”), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include <SDL2/SDL.h>
 #include <GL/glew.h>
+#include <SDL2/SDL.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdatomic.h>
 #ifdef _WIN32
-  #include "tinycthread.h"
+#include "tinycthread.h"
 #else
-  #include <threads.h>
+#include <threads.h>
 #endif
 
-#include "game.h"
-#include "shared.h"
 #include "config.h"
-#include "utils.h"
+#include "game.h"
 #include "shaders.h"
+#include "shared.h"
+#include "utils.h"
 
 // game loop ran in main thread
 void game_loop(SDL_Window *window, SharedData *shared, bool server) {
-  // quad for paddles and VAO/VBO 
-  float quad[] = 
-  {
-    0,0, 1,0, 1,1, 
-    0,0, 1,1, 0,1
-  };
+  // quad for paddles and VAO/VBO
+  float quad[] = {0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1};
 
   GLuint vao, vbo;
   glGenVertexArrays(1, &vao);
@@ -46,7 +53,7 @@ void game_loop(SDL_Window *window, SharedData *shared, bool server) {
   glEnableVertexAttribArray(0);
 
   // create shaders programs
-  GLuint ball_prog   = load_shader(ball_vertex_shader, ball_frag_shader);
+  GLuint ball_prog = load_shader(ball_vertex_shader, ball_frag_shader);
   GLuint paddle_prog = load_shader(paddle_vertex_shader, paddle_frag_shader);
   if (ball_prog == 0 || paddle_prog == 0) {
     // Error log is printed out by load_shader()
@@ -54,22 +61,22 @@ void game_loop(SDL_Window *window, SharedData *shared, bool server) {
   }
 
   // 2D orthographic projection
-  float proj[16]; 
+  float proj[16];
   ortho(proj, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT, 0);
 
   // ball
-  GLint uProj_ball    = glGetUniformLocation(ball_prog, "uProj");
-  GLint uPos_ball     = glGetUniformLocation(ball_prog, "uPos");
-  GLint uSize_ball    = glGetUniformLocation(ball_prog, "uSize");
+  GLint uProj_ball = glGetUniformLocation(ball_prog, "uProj");
+  GLint uPos_ball = glGetUniformLocation(ball_prog, "uPos");
+  GLint uSize_ball = glGetUniformLocation(ball_prog, "uSize");
 
   // paddle
-  GLint uProj_paddle  = glGetUniformLocation(paddle_prog, "uProj");
-  GLint uPos_paddle   = glGetUniformLocation(paddle_prog, "uPos");
-  GLint uSize_paddle  = glGetUniformLocation(paddle_prog, "uSize");
+  GLint uProj_paddle = glGetUniformLocation(paddle_prog, "uProj");
+  GLint uPos_paddle = glGetUniformLocation(paddle_prog, "uPos");
+  GLint uSize_paddle = glGetUniformLocation(paddle_prog, "uSize");
   GLint uColor_paddle = glGetUniformLocation(paddle_prog, "uColor");
 
-  float y[2] = {0.0f,0.0f};        // y[0] = my pos, y[1] = his pos
-  float ball_pos[2] = {0.0f,0.0f}; // ball x and y pos
+  float y[2] = {0.0f, 0.0f};        // y[0] = my pos, y[1] = his pos
+  float ball_pos[2] = {0.0f, 0.0f}; // ball x and y pos
 
   // TPS
   const double tick_dt = 1.0 / GAME_TPS;
@@ -92,7 +99,8 @@ void game_loop(SDL_Window *window, SharedData *shared, bool server) {
 
     // Time
     Uint64 now = SDL_GetPerformanceCounter();
-    double frame_time = (double)(now - prev_counter) / SDL_GetPerformanceFrequency();
+    double frame_time =
+        (double)(now - prev_counter) / SDL_GetPerformanceFrequency();
     prev_counter = now;
 
     if (frame_time > 0.25) {
@@ -114,11 +122,11 @@ void game_loop(SDL_Window *window, SharedData *shared, bool server) {
     while (accumulator >= tick_dt) {
       // Server
       if (server) {
-        mtx_lock  (&shared->ball_mtx);
+        mtx_lock(&shared->ball_mtx);
         {
           int scorer = update_ball(&shared->ball, y, (float)tick_dt);
           if (scorer != -1) {
-            mtx_lock  (&shared->score_mtx);
+            mtx_lock(&shared->score_mtx);
             {
               shared->score[scorer] += 1;
             }
@@ -137,7 +145,8 @@ void game_loop(SDL_Window *window, SharedData *shared, bool server) {
       {
         // calculate new player pos
         shared->y[0] += dy * PADDLE_SPEED * (float)tick_dt;
-        shared->y[0] = clamp(shared->y[0], 0.0f, LOGICAL_HEIGHT-PADDLE_HEIGHT);
+        shared->y[0] =
+            clamp(shared->y[0], 0.0f, LOGICAL_HEIGHT - PADDLE_HEIGHT);
         y[0] = shared->y[0];
         y[1] = shared->y[1];
       }
@@ -193,4 +202,3 @@ void game_loop(SDL_Window *window, SharedData *shared, bool server) {
 
   return;
 }
-

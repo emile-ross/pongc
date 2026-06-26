@@ -5,7 +5,8 @@ typedef struct {
   float x, y;
 } Vec2;
 
-// Skips whitespaces and returns str ptr that points to first character (that isnt whitespace, tab, etc.)
+// Skips whitespaces and returns str ptr that points to first character (that
+// isnt whitespace, tab, etc.)
 const char *skip_spaces(const char *str);
 
 // Returns:

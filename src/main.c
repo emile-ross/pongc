@@ -3,39 +3,50 @@ The MIT License (MIT)
 
 Copyright © 2026 Zerfithel
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the “Software”), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #ifdef _WIN32
-  #define SDL_MAIN_HANDLED
+#define SDL_MAIN_HANDLED
 #endif
 
+#include <stdatomic.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdatomic.h>
 #include <time.h>
 #ifdef _WIN32
-  #include "tinycthread.h"
+#include "tinycthread.h"
 #else
-  #include <threads.h>
+#include <threads.h>
 #endif
 
-#include <SDL2/SDL.h>
 #include <GL/glew.h>
+#include <SDL2/SDL.h>
 #include <enet/enet.h>
 
-#include "game.h"
 #include "client.h"
-#include "server.h"
-#include "utils.h"
-#include "shared.h"
 #include "config.h"
+#include "game.h"
+#include "server.h"
+#include "shared.h"
+#include "utils.h"
 
 #define MIN_ARG 2
 
@@ -85,7 +96,8 @@ int main(int argc, char **argv) {
 
     char *colon = strchr(arg, ':');
     if (!colon) {
-      fprintf(stderr, "ERROR: Invalid server address, missing colon <ip:port>\n");
+      fprintf(stderr,
+              "ERROR: Invalid server address, missing colon <ip:port>\n");
       status = 1;
       goto cleanup;
     }
@@ -146,8 +158,7 @@ int main(int argc, char **argv) {
 
     _port = (enet_uint16)port_input;
     _is_server = true;
-  }
-  else {
+  } else {
     fprintf(stderr, "ERROR: Unknown argument: %s\n", argv[1]);
     status = 1;
     goto cleanup;
@@ -155,7 +166,9 @@ int main(int argc, char **argv) {
 
   // sanity check
   if (!_is_server && (_ip == NULL || _port == 0)) {
-    fprintf(stderr, "ERROR: Failed to get server IP or port\nIP: %s\nPort: %u\n", _ip, _port);
+    fprintf(stderr,
+            "ERROR: Failed to get server IP or port\nIP: %s\nPort: %u\n", _ip,
+            _port);
     status = 1;
     goto cleanup;
   }
@@ -176,19 +189,13 @@ int main(int argc, char **argv) {
 
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                      SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
   // create window
-  window = SDL_CreateWindow(
-    _is_server ? "PongC - Server" : "PongC - Client",
-    SDL_WINDOWPOS_CENTERED,
-    SDL_WINDOWPOS_CENTERED,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
-    WINDOW_FLAGS
-  );
+  window = SDL_CreateWindow(_is_server ? "PongC - Server" : "PongC - Client",
+                            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                            WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_FLAGS);
 
   if (!window) {
     fprintf(stderr, "Error: Failed to create window: %s\n", SDL_GetError());

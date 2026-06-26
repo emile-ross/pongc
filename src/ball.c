@@ -1,11 +1,11 @@
 #include <math.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "ball.h"
-#include "utils.h"
-#include "random.h"
 #include "config.h"
+#include "random.h"
+#include "utils.h"
 
 // Not thread-safe, must use mutex before and after calling function
 // if ball is in shared struct between threads.
@@ -16,7 +16,8 @@
 // 1 = enemy scored
 
 int update_ball(Ball *b, float paddle_y[2], float tick_dt) {
-  static bool first_hit_done = false; // tracks first paddle hit in current round
+  static bool first_hit_done =
+      false; // tracks first paddle hit in current round
 
   // Sizes (width, height) of each paddle
   // [0] = me
@@ -37,11 +38,11 @@ int update_ball(Ball *b, float paddle_y[2], float tick_dt) {
 
   start_x[0] = 0.0f; // Starts at left side of screen
   start_x[1] = LOGICAL_WIDTH - PADDLE_WIDTH;
-  
+
   end_x[0] = PADDLE_WIDTH;
   end_x[1] = LOGICAL_WIDTH;
 
-  // new position if didnt score 
+  // new position if didnt score
   b->x += b->dx * b->speed * tick_dt;
   b->y += b->dy * b->speed * tick_dt;
 
@@ -57,20 +58,18 @@ int update_ball(Ball *b, float paddle_y[2], float tick_dt) {
   }
 
   // Ball hit left paddle
-  if (b->dx < 0.0f &&
-      b->x <= end_x[0] &&
-      b->x + BALL_WIDTH >= start_x[0] &&
-      b->y + BALL_HEIGHT >= start_y[0] &&
-      b->y <= end_y[0]) 
-  {
+  if (b->dx < 0.0f && b->x <= end_x[0] && b->x + BALL_WIDTH >= start_x[0] &&
+      b->y + BALL_HEIGHT >= start_y[0] && b->y <= end_y[0]) {
     b->speed += BALL_SPEED_INCREASE;
     b->x = end_x[0];
 
     float paddle_center = start_y[0] + PADDLE_HEIGHT / 2.0f;
     float ball_center = b->y + BALL_HEIGHT / 2.0f;
     float hit_pos = (ball_center - paddle_center) / (PADDLE_HEIGHT / 2.0f);
-    if (hit_pos < -1.0f) hit_pos = -1.0f;
-    if (hit_pos > 1.0f) hit_pos = 1.0f;
+    if (hit_pos < -1.0f)
+      hit_pos = -1.0f;
+    if (hit_pos > 1.0f)
+      hit_pos = 1.0f;
 
     b->dx = fabsf(b->dx); // always right
 
@@ -94,20 +93,18 @@ int update_ball(Ball *b, float paddle_y[2], float tick_dt) {
   }
 
   // Ball hit right paddle
-  if (b->dx > 0.0f &&
-      b->x + BALL_WIDTH >= start_x[1] &&
-      b->x <= end_x[1] &&
-      b->y + BALL_HEIGHT >= start_y[1] &&
-      b->y <= end_y[1]) 
-  {
+  if (b->dx > 0.0f && b->x + BALL_WIDTH >= start_x[1] && b->x <= end_x[1] &&
+      b->y + BALL_HEIGHT >= start_y[1] && b->y <= end_y[1]) {
     b->speed += BALL_SPEED_INCREASE;
     b->x = start_x[1] - BALL_WIDTH;
 
     float paddle_center = start_y[1] + PADDLE_HEIGHT / 2.0f;
     float ball_center = b->y + BALL_HEIGHT / 2.0f;
     float hit_pos = (ball_center - paddle_center) / (PADDLE_HEIGHT / 2.0f);
-    if (hit_pos < -1.0f) hit_pos = -1.0f;
-    if (hit_pos > 1.0f) hit_pos = 1.0f;
+    if (hit_pos < -1.0f)
+      hit_pos = -1.0f;
+    if (hit_pos > 1.0f)
+      hit_pos = 1.0f;
 
     b->dx = -fabsf(b->dx); // always left
 
