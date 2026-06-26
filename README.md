@@ -15,6 +15,10 @@ PongC is a multithreaded implementation of a retro-game „Pong” in pure C, it
 - Low-level optimizations (thanks to being written in C)
 - Hackable shaders and game settings
 
+# Install from package
+
+You can find pre-compiled binaries for both Windows and Linux in [releases page](https://github.com/zerfithel/pongc/releases).
+
 # Install from source
 
 Dependencies:
@@ -32,10 +36,10 @@ The build is CMake-based. After installing the dependencies run the following co
 
 ```bash
 git clone https://github.com/zerfithel/pongc && cd pongc
-[ -d "build/" ] || mkdir build/
-cd build && cmake ..
-make -j$(nproc)
-cd ..
+cmake .. -B build -DCMAKE_BUILD_TYPE=Release # Build for production
+cmake .. -B build -DCMAKE_BUILD_TYPE=Debug   # Build for debugging
+cd build && make -j$(nproc)
+./pongc
 ```
 
 In order to install PongC run following command if you are using Linux or Unix/Unix-like system:
@@ -63,4 +67,4 @@ If you are using Windows, please run instead:
 
 # License
 
-PongC project and source code inside `src/` and `include/` are under MIT license. For more details click [here](LICENSE.txt).
+PongC is available under [MIT License](LICENSE.txt)
