@@ -42,7 +42,9 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 int main(int argc, char **argv) {
   int status = 0;
 
-  srand(time(NULL));
+  // Initialise seed for rand() with the current time
+  // used for ball movement & positioning in ball.c
+  srand((unsigned)time(NULL));
 
   char ip_buffer[64] = {0};
   const char *_ip = NULL;
@@ -88,7 +90,7 @@ int main(int argc, char **argv) {
       goto cleanup;
     }
 
-    size_t ip_len = colon - arg;
+    size_t ip_len = (size_t)(colon - arg);
     if (ip_len >= sizeof(ip_buffer)) {
       fprintf(stderr, "ERROR: IP too long\n");
       status = 1;
